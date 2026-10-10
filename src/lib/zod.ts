@@ -21,3 +21,11 @@ export const optionalString = () =>
   z.preprocess(empty, z.string().trim().optional()).transform((v) => v ?? null);
 
 export const checkbox = () => z.preprocess((v) => v === "on" || v === "true", z.boolean());
+
+const OBJECT_ID = /^[a-f\d]{24}$/i;
+
+/** A MongoDB ObjectId referencing another document (e.g. carId). */
+export const objectId = (msg = "Invalid id") => z.string().regex(OBJECT_ID, msg);
+
+export const optionalObjectId = () =>
+  z.preprocess(empty, z.string().regex(OBJECT_ID, "Invalid id").optional()).transform((v) => v ?? null);

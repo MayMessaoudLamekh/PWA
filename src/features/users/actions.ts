@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { formToObject, validationError, type ActionState } from "@/lib/action-state";
+import { isObjectId } from "@/lib/object-id";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
 import { createSession, deleteSession, requireAdmin, requireUser } from "@/lib/session";
@@ -69,7 +70,7 @@ export async function changeUserRole(formData: FormData) {
 export async function deleteUser(formData: FormData) {
   const admin = await requireAdmin();
   const userId = String(formData.get("userId") ?? "");
-  if (!userId || userId === admin.id) return;
+  if (!isObjectId(userId) || userId === admin.id) return;
 
   await prisma.user.delete({ where: { id: userId } });
   revalidatePath("/users");

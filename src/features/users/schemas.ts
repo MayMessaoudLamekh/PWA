@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ROLES, valuesOf } from "@/config/constants";
+import { objectId } from "@/lib/zod";
 
 export const registerSchema = z.object({
   name: z.string().trim().min(2, "Name is too short"),
@@ -18,6 +19,6 @@ export const profileSchema = z.object({
 });
 
 export const roleSchema = z.object({
-  userId: z.string().min(1),
+  userId: objectId(),
   role: z.enum(valuesOf(ROLES)),
 });

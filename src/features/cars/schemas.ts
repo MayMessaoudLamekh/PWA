@@ -4,6 +4,7 @@ import {
   checkbox,
   optionalDate,
   optionalNumber,
+  optionalObjectId,
   optionalString,
   requiredDate,
   requiredNumber,
@@ -34,7 +35,7 @@ export const maintenanceSchema = z.object({
   mileage: requiredNumber().pipe(z.number().int()),
   cost: requiredNumber(),
   description: optionalString(),
-  garageId: optionalString(),
+  garageId: optionalObjectId(),
 });
 
 export const tripSchema = z.object({

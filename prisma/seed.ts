@@ -3,12 +3,9 @@
 
 import "dotenv/config";
 import { randomBytes, scryptSync } from "node:crypto";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
-import { PrismaClient } from "../src/generated/prisma/client";
+import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient({
-  adapter: new PrismaBetterSqlite3({ url: process.env.DATABASE_URL ?? "file:./dev.db" }),
-});
+const prisma = new PrismaClient();
 
 // Same format as src/lib/password.ts
 function hash(password: string) {

@@ -2,19 +2,20 @@
 // Smart Car Management — database schema
 //
 // One section per module. If you own a module, you own its section.
-// After editing this file run:  npm run db:migrate -- --name <what-changed>
+// Database: MongoDB (Atlas). There are no migrations with MongoDB:
+// after editing this file run  npm run db:push  (syncs indexes + regenerates the client).
 //
-// Enum-like fields are stored as String (SQLite) and validated with Zod.
+// Enum-like fields are stored as String and validated with Zod.
 // The allowed values live in src/config/constants.ts — keep them in sync.
 // =============================================================================
 
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
 }
 
 // -----------------------------------------------------------------------------
@@ -22,7 +23,7 @@ datasource db {
 // -----------------------------------------------------------------------------
 
 model User {
-  id           String   @id @default(cuid())
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
   name         String
   email        String   @unique
   phone        String?
@@ -40,7 +41,7 @@ model User {
 // -----------------------------------------------------------------------------
 
 model Car {
-  id          String   @id @default(cuid())
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   brand       String
   model       String
   year        Int
@@ -51,7 +52,7 @@ model Car {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  ownerId String
+  ownerId String  @db.ObjectId
   owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
   fuelLogs     FuelLog[]
@@ -64,7 +65,7 @@ model Car {
 
 /// Every refuel. Source of truth for consumption (L/100km) and fuel costs.
 model FuelLog {
-  id            String   @id @default(cuid())
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
   date          DateTime
   mileage       Int // odometer at refuel
   liters        Float
@@ -74,7 +75,7 @@ model FuelLog {
   station       String?
   createdAt     DateTime @default(now())
 
-  carId String
+  carId String  @db.ObjectId
   car   Car    @relation(fields: [carId], references: [id], onDelete: Cascade)
 
   @@index([carId, date])
@@ -82,7 +83,7 @@ model FuelLog {
 
 /// Maintenance history ("entretiens"). Optionally done at a registered garage.
 model Maintenance {
-  id          String   @id @default(cuid())
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   type        String // OIL_CHANGE | TIRES | BRAKES | INSPECTION | BATTERY | FILTERS | OTHER
   date        DateTime
   mileage     Int
@@ -90,9 +91,9 @@ model Maintenance {
   description String?
   createdAt   DateTime @default(now())
 
-  carId    String
+  carId    String  @db.ObjectId
   car      Car     @relation(fields: [carId], references: [id], onDelete: Cascade)
-  garageId String?
+  garageId String? @db.ObjectId
   garage   Garage? @relation(fields: [garageId], references: [id], onDelete: SetNull)
 
   @@index([carId, date])
@@ -100,7 +101,7 @@ model Maintenance {
 
 /// Trip history ("historique des trajets").
 model Trip {
-  id         String   @id @default(cuid())
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
   date       DateTime
   from       String
   to         String
@@ -108,7 +109,7 @@ model Trip {
   notes      String?
   createdAt  DateTime @default(now())
 
-  carId String
+  carId String  @db.ObjectId
   car   Car    @relation(fields: [carId], references: [id], onDelete: Cascade)
 
   @@index([carId, date])
@@ -116,7 +117,7 @@ model Trip {
 
 /// Reminders ("rappels") — by date, by mileage, or both.
 model Reminder {
-  id         String    @id @default(cuid())
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
   title      String
   type       String    @default("MAINTENANCE") // MAINTENANCE | INSURANCE | INSPECTION | OTHER
   dueDate    DateTime?
@@ -124,7 +125,7 @@ model Reminder {
   done       Boolean   @default(false)
   createdAt  DateTime  @default(now())
 
-  carId String
+  carId String  @db.ObjectId
   car   Car    @relation(fields: [carId], references: [id], onDelete: Cascade)
 }
 
@@ -133,7 +134,7 @@ model Reminder {
 // -----------------------------------------------------------------------------
 
 model Insurance {
-  id           String   @id @default(cuid())
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
   provider     String
   policyNumber String
   coverage     String   @default("THIRD_PARTY") // THIRD_PARTY | THIRD_PARTY_PLUS | ALL_RISK
@@ -142,7 +143,7 @@ model Insurance {
   premium      Float // yearly cost
   createdAt    DateTime @default(now())
 
-  carId String
+  carId String  @db.ObjectId
   car   Car    @relation(fields: [carId], references: [id], onDelete: Cascade)
 }
 
@@ -151,7 +152,7 @@ model Insurance {
 // -----------------------------------------------------------------------------
 
 model Complaint {
-  id        String   @id @default(cuid())
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
   subject   String
   message   String
   category  String   @default("OTHER") // GARAGE | INSURANCE | APP | OTHER
@@ -160,11 +161,11 @@ model Complaint {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  userId   String
+  userId   String  @db.ObjectId
   user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  carId    String?
+  carId    String? @db.ObjectId
   car      Car?    @relation(fields: [carId], references: [id], onDelete: SetNull)
-  garageId String?
+  garageId String? @db.ObjectId
   garage   Garage? @relation(fields: [garageId], references: [id], onDelete: SetNull)
 }
 
@@ -173,7 +174,7 @@ model Complaint {
 // -----------------------------------------------------------------------------
 
 model Garage {
-  id        String   @id @default(cuid())
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
   name      String
   address   String
   city      String

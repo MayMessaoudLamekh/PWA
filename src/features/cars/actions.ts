@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { formToObject, validationError, type ActionState } from "@/lib/action-state";
+import { isObjectId } from "@/lib/object-id";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { carSchema, fuelLogSchema, maintenanceSchema, reminderSchema, tripSchema } from "./schemas";
@@ -10,6 +11,7 @@ import { carSchema, fuelLogSchema, maintenanceSchema, reminderSchema, tripSchema
 /** Throws if the car doesn't belong to the current user. */
 async function requireOwnCar(carId: string) {
   const user = await requireUser();
+  if (!isObjectId(carId)) throw new Error("Car not found");
   const car = await prisma.car.findFirst({ where: { id: carId, ownerId: user.id } });
   if (!car) throw new Error("Car not found");
   return car;

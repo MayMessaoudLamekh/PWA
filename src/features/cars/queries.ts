@@ -1,4 +1,5 @@
 import "server-only";
+import { isObjectId } from "@/lib/object-id";
 import { prisma } from "@/lib/prisma";
 
 // Every query is scoped to the owner — a user can never read someone else's car.
@@ -14,7 +15,8 @@ export function listCars(ownerId: string) {
   });
 }
 
-export function getCar(ownerId: string, carId: string) {
+export async function getCar(ownerId: string, carId: string) {
+  if (!isObjectId(carId)) return null;
   return prisma.car.findFirst({
     where: { id: carId, ownerId },
     include: {

@@ -1,10 +1,10 @@
 import { z } from "zod";
 import { COVERAGE_TYPES, valuesOf } from "@/config/constants";
-import { requiredDate, requiredNumber } from "@/lib/zod";
+import { objectId, requiredDate, requiredNumber } from "@/lib/zod";
 
 export const insuranceSchema = z
   .object({
-    carId: z.string().min(1, "Choose a car"),
+    carId: objectId("Choose a car"),
     provider: z.string().trim().min(2, "Required"),
     policyNumber: z.string().trim().min(1, "Required"),
     coverage: z.enum(valuesOf(COVERAGE_TYPES)),
