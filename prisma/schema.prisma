@@ -1,0 +1,189 @@
+// =============================================================================
+// Smart Car Management — database schema
+//
+// One section per module. If you own a module, you own its section.
+// After editing this file run:  npm run db:migrate -- --name <what-changed>
+//
+// Enum-like fields are stored as String (SQLite) and validated with Zod.
+// The allowed values live in src/config/constants.ts — keep them in sync.
+// =============================================================================
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// -----------------------------------------------------------------------------
+// 1. USER MANAGEMENT
+// -----------------------------------------------------------------------------
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  phone        String?
+  passwordHash String
+  role         String   @default("USER") // USER | ADMIN
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  cars       Car[]
+  complaints Complaint[]
+}
+
+// -----------------------------------------------------------------------------
+// 2. CAR MANAGEMENT  (car + consumption + maintenance + trips + reminders)
+// -----------------------------------------------------------------------------
+
+model Car {
+  id          String   @id @default(cuid())
+  brand       String
+  model       String
+  year        Int
+  plateNumber String   @unique
+  vin         String?
+  fuelType    String   @default("PETROL") // PETROL | DIESEL | HYBRID | ELECTRIC | LPG
+  mileage     Int // current odometer (km), updated by fuel logs / trips / maintenance
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  fuelLogs     FuelLog[]
+  maintenances Maintenance[]
+  trips        Trip[]
+  reminders    Reminder[]
+  insurances   Insurance[]
+  complaints   Complaint[]
+}
+
+/// Every refuel. Source of truth for consumption (L/100km) and fuel costs.
+model FuelLog {
+  id            String   @id @default(cuid())
+  date          DateTime
+  mileage       Int // odometer at refuel
+  liters        Float
+  pricePerLiter Float
+  totalCost     Float
+  fullTank      Boolean  @default(true)
+  station       String?
+  createdAt     DateTime @default(now())
+
+  carId String
+  car   Car    @relation(fields: [carId], references: [id], onDelete: Cascade)
+
+  @@index([carId, date])
+}
+
+/// Maintenance history ("entretiens"). Optionally done at a registered garage.
+model Maintenance {
+  id          String   @id @default(cuid())
+  type        String // OIL_CHANGE | TIRES | BRAKES | INSPECTION | BATTERY | FILTERS | OTHER
+  date        DateTime
+  mileage     Int
+  cost        Float
+  description String?
+  createdAt   DateTime @default(now())
+
+  carId    String
+  car      Car     @relation(fields: [carId], references: [id], onDelete: Cascade)
+  garageId String?
+  garage   Garage? @relation(fields: [garageId], references: [id], onDelete: SetNull)
+
+  @@index([carId, date])
+}
+
+/// Trip history ("historique des trajets").
+model Trip {
+  id         String   @id @default(cuid())
+  date       DateTime
+  from       String
+  to         String
+  distanceKm Float
+  notes      String?
+  createdAt  DateTime @default(now())
+
+  carId String
+  car   Car    @relation(fields: [carId], references: [id], onDelete: Cascade)
+
+  @@index([carId, date])
+}
+
+/// Reminders ("rappels") — by date, by mileage, or both.
+model Reminder {
+  id         String    @id @default(cuid())
+  title      String
+  type       String    @default("MAINTENANCE") // MAINTENANCE | INSURANCE | INSPECTION | OTHER
+  dueDate    DateTime?
+  dueMileage Int?
+  done       Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+
+  carId String
+  car   Car    @relation(fields: [carId], references: [id], onDelete: Cascade)
+}
+
+// -----------------------------------------------------------------------------
+// 3. INSURANCE MANAGEMENT
+// -----------------------------------------------------------------------------
+
+model Insurance {
+  id           String   @id @default(cuid())
+  provider     String
+  policyNumber String
+  coverage     String   @default("THIRD_PARTY") // THIRD_PARTY | THIRD_PARTY_PLUS | ALL_RISK
+  startDate    DateTime
+  endDate      DateTime
+  premium      Float // yearly cost
+  createdAt    DateTime @default(now())
+
+  carId String
+  car   Car    @relation(fields: [carId], references: [id], onDelete: Cascade)
+}
+
+// -----------------------------------------------------------------------------
+// 4. COMPLAINTS MANAGEMENT
+// -----------------------------------------------------------------------------
+
+model Complaint {
+  id        String   @id @default(cuid())
+  subject   String
+  message   String
+  category  String   @default("OTHER") // GARAGE | INSURANCE | APP | OTHER
+  status    String   @default("OPEN") // OPEN | IN_PROGRESS | RESOLVED | CLOSED
+  response  String? // admin answer
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId   String
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  carId    String?
+  car      Car?    @relation(fields: [carId], references: [id], onDelete: SetNull)
+  garageId String?
+  garage   Garage? @relation(fields: [garageId], references: [id], onDelete: SetNull)
+}
+
+// -----------------------------------------------------------------------------
+// 5. GARAGE MANAGEMENT
+// -----------------------------------------------------------------------------
+
+model Garage {
+  id        String   @id @default(cuid())
+  name      String
+  address   String
+  city      String
+  phone     String?
+  email     String?
+  services  String? // comma-separated, e.g. "Oil change, Tires, Brakes"
+  latitude  Float? // for GPS / map integration
+  longitude Float?
+  createdAt DateTime @default(now())
+
+  maintenances Maintenance[]
+  complaints   Complaint[]
+}

@@ -1,36 +1,179 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🚗 SmartCar — Smart Car Management
 
-## Getting Started
+A platform to manage a car: the user enters **model, mileage, consumption and maintenance**, and the system computes **📊 consumption, 🔧 maintenance, 💰 costs, 📅 reminders and 📈 evolution**, and predicts:
 
-First, run the development server:
+> "Based on your driving history, your next maintenance is probably due around…"
+
+> 🧱 **This is a skeleton.** The backend (database, auth, validation, server actions, queries, analytics) is ready.
+> Pages are placeholders with `TODO (UI)` comments listing which queries/actions to use — the team builds the interface.
+
+**Stack:** Next.js 16 (App Router, Server Actions) · TypeScript · Tailwind CSS 4 · Prisma 7 + SQLite · Zod
+
+---
+
+## 🚀 Getting started
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install           # also generates the Prisma client
+cp .env.example .env  # first time only
+npm run db:migrate    # create the local SQLite DB (dev.db)
+npm run db:seed       # load demo data
+npm run dev           # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Demo accounts (use them once the login form is built) (from `prisma/seed.ts`):
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Role  | Email                  | Password    |
+| ----- | ---------------------- | ----------- |
+| Admin | `admin@smartcar.test`  | `admin123`  |
+| User  | `driver@smartcar.test` | `driver123` |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+> When you register a new account on an empty database, the first account becomes **ADMIN**.
 
-## Learn More
+### Scripts
 
-To learn more about Next.js, take a look at the following resources:
+| Command                         | What it does                                       |
+| ------------------------------- | -------------------------------------------------- |
+| `npm run dev`                   | Start the dev server                               |
+| `npm run build`                 | Production build (run before opening a PR)        |
+| `npm run lint` / `typecheck`    | ESLint / TypeScript checks                         |
+| `npm run db:migrate -- --name x`| Apply schema changes and create a migration        |
+| `npm run db:generate`           | Regenerate the Prisma client                       |
+| `npm run db:seed`               | Wipe & reload demo data                            |
+| `npm run db:reset`              | Drop the DB, re-run all migrations and the seed    |
+| `npm run db:studio`             | Visual DB browser (Prisma Studio)                  |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🧩 Modules (one owner each)
 
-## Deploy on Vercel
+| # | Module                    | Feature folder           | Pages                                     | DB models                                          |
+|---|---------------------------|--------------------------|-------------------------------------------|----------------------------------------------------|
+| 1 | **User Management**       | `src/features/users`     | `/login` `/register` `/profile` `/users`  | `User`                                             |
+| 2 | **Car Management**        | `src/features/cars`      | `/dashboard` `/cars` `/cars/[carId]`      | `Car` `FuelLog` `Maintenance` `Trip` `Reminder`    |
+| 3 | **Insurance Management**  | `src/features/insurance` | `/insurance`                              | `Insurance`                                        |
+| 4 | **Complaints Management** | `src/features/complaints`| `/complaints`                             | `Complaint`                                        |
+| 5 | **Garage Management**     | `src/features/garages`   | `/garages` `/garages/[garageId]/edit`     | `Garage`                                           |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+> Fill in the owners: 1. ___ 2. ___ 3. ___ 4. ___ 5. ___
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## 📁 Project structure
+
+```
+smartcar/
+├── prisma/
+│   ├── schema.prisma          # DB schema — one section per module
+│   ├── migrations/            # generated by `db:migrate`, commit them
+│   └── seed.ts                # demo data
+├── prisma.config.ts           # Prisma CLI config (reads DATABASE_URL)
+├── src/
+│   ├── app/                   # ROUTES ONLY — placeholder pages (see TODO comments)
+│   │   ├── (auth)/            # public pages: login, register (centered layout)
+│   │   ├── (app)/             # logged-in pages (sidebar + topbar layout)
+│   │   │   ├── dashboard/
+│   │   │   ├── cars/  [carId]/  new/
+│   │   │   ├── insurance/
+│   │   │   ├── garages/
+│   │   │   ├── complaints/
+│   │   │   ├── users/         # admin only
+│   │   │   └── profile/
+│   │   ├── layout.tsx         # root layout (html, fonts)
+│   │   └── page.tsx           # public landing page
+│   │
+│   ├── features/              # ⭐ ALL BUSINESS LOGIC — one folder per module
+│   │   └── <module>/
+│   │       ├── actions.ts     # "use server" — mutations (create/update/delete)
+│   │       ├── queries.ts     # server-only — DB reads
+│   │       ├── schemas.ts     # Zod validation for forms
+│   │       ├── components/    # UI specific to this module (empty — to build)
+│   │       └── …              # extra logic (cars/analytics.ts, insurance/status.ts)
+│   │
+│   ├── components/
+│   │   ├── ui/                # shared building blocks: Button, Input, Card… (empty — to build)
+│   │   └── layout/            # Sidebar, Topbar (empty — to build)
+│   ├── config/
+│   │   ├── constants.ts       # enum values (fuel types, statuses…), currency, locale
+│   │   └── navigation.ts      # navigation links
+│   ├── lib/                   # framework-level helpers (prisma, session, password, format, zod)
+│   ├── generated/prisma/      # generated Prisma client (git-ignored, do not edit)
+│   └── proxy.ts               # redirects logged-out users to /login
+└── .env.example
+```
+
+### The golden rules
+
+1. **Pages in `app/` stay thin.** They read params, call `requireUser()`, call a query, and render feature components.
+2. **Work in your own feature folder.** If you need another module's data, import its `queries.ts` (e.g. complaints uses `listGarageOptions()` from garages). Don't write Prisma calls for someone else's model.
+3. **Every server action starts with `requireUser()` or `requireAdmin()`.** Server actions are public endpoints. Also check ownership (`where: { id, ownerId: user.id }`).
+4. **Validate every form with Zod** in `schemas.ts`, and return `validationError(parsed.error)` so the form shows field errors automatically.
+5. **Enum-like values live in `src/config/constants.ts`.** Never hard-code `"OIL_CHANGE"` strings in components.
+6. **Generic UI goes in `components/ui`**, module-specific UI in `features/<module>/components`.
+
+---
+
+## 🛠️ How to add a feature (example: "add a field to Garage")
+
+1. `prisma/schema.prisma` → add the field to `Garage`.
+2. `npm run db:migrate -- --name add-garage-rating` (commit the new migration folder).
+3. `src/features/garages/schemas.ts` → add the field to the Zod schema.
+4. Add the input to your garage form and display it. The action already saves `parsed.data`.
+
+### Form pattern (used everywhere)
+
+```tsx
+// features/x/actions.ts
+"use server";
+export async function createX(_: ActionState, formData: FormData): Promise<ActionState> {
+  const user = await requireUser();
+  const parsed = xSchema.safeParse(formToObject(formData));
+  if (!parsed.success) return validationError(parsed.error);
+  await prisma.x.create({ data: { ...parsed.data, userId: user.id } });
+  revalidatePath("/x");
+  return { ok: true, message: "Saved." };
+}
+
+// features/x/components/x-form.tsx
+"use client";
+const [state, action, pending] = useActionState(createX, undefined);
+<form action={action}>
+  <input name="name" />
+  {state?.errors?.name && <p>{state.errors.name[0]}</p>}
+  {state?.message && <p>{state.message}</p>}
+  <button disabled={pending}>Save</button>
+</form>
+```
+
+---
+
+## 🧠 Smart features (Car module)
+
+All the calculations are **pure functions** in `src/features/cars/analytics.ts` (easy to test & extend):
+
+| Function                  | What it computes                                                         |
+| ------------------------- | ------------------------------------------------------------------------ |
+| `consumptionSeries`       | L/100km between full-tank refuels → consumption chart                    |
+| `averageConsumption`      | average L/100km                                                          |
+| `costSummary`             | fuel + maintenance + insurance totals, cost per km                       |
+| `monthlyCosts`            | spending per month → evolution chart                                     |
+| `kmPerDay`                | driving rhythm from odometer readings                                    |
+| `predictNextMaintenance`  | next service mileage (last service + 10,000 km) and **estimated date**   |
+| `upcomingReminders`       | reminders overdue / due within 30 days or 1,000 km                       |
+
+### Ideas for later
+
+- 📍 **GPS / map**: garages already store `latitude`/`longitude` — show them on a map (Leaflet + OpenStreetMap).
+- ⛽ **Fuel stations & prices**: `FuelLog.station` exists; add a `FuelPrice` model or an external API.
+- 🗺️ **Trips**: estimated cost per trip is already shown; add route distance via a maps API.
+- 🔔 **Notifications**: email reminders for due maintenance / expiring insurance.
+
+---
+
+## 🤝 Git workflow
+
+- `main` is always working. Never push directly to it.
+- Branch per task: `feature/<module>-<short-desc>` (e.g. `feature/garages-rating`), `fix/…`.
+- Small PRs, one teammate reviews. Run `npm run lint && npm run build` before opening.
+- Schema changes: **one person at a time** — announce it in the group, commit the migration, others run `npm run db:migrate` after pulling.
+- Commit messages: `garages: add rating field`, `cars: fix consumption chart`.
