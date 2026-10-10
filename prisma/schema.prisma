@@ -188,3 +188,17 @@ model Garage {
   maintenances Maintenance[]
   complaints   Complaint[]
 }
+
+// -----------------------------------------------------------------------------
+// LANDING PAGE — "Get in touch" form
+// -----------------------------------------------------------------------------
+
+model ContactMessage {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  email     String
+  phone     String?
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}

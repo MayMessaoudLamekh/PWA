@@ -1,1 +1,47 @@
 @import "tailwindcss";
+
+/* SmartCar colour chart — change the brand colours here only. */
+:root {
+  --bg: #050608;
+  --surface: #0c161a;
+  --panel: #14282c;
+  --primary: #84deea;
+  --accent: #7cdff0;
+  --border: #44949c;
+  --text: #dce8e8;
+  --text-muted: #70747c;
+}
+
+/* Exposes the colours as Tailwind classes: bg-surface, text-primary, border-border… */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-panel: var(--panel);
+  --color-primary: var(--primary);
+  --color-accent: var(--accent);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-muted: var(--text-muted);
+  --font-sans: var(--font-poppins), system-ui, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

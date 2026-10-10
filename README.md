@@ -54,6 +54,15 @@ Demo accounts (use them once the login form is built) (from `prisma/seed.ts`):
 
 ---
 
+## 🎨 Theme
+
+The colour chart lives in `src/app/globals.css` (`:root` variables) and is exposed as Tailwind classes:
+`bg-bg`, `bg-surface`, `bg-panel`, `text-primary`, `bg-accent`, `border-border`, `text-text`, `text-muted`.
+Use these instead of raw colours so the whole app stays consistent. Font: Poppins.
+
+The public landing page (`/`) is built from the Oberlo template, in `src/features/landing/`
+(stats and garages come live from the database; the "Get in touch" form saves to `ContactMessage`).
+
 ## 🧩 Modules (one owner each)
 
 | # | Module                    | Feature folder           | Pages                                     | DB models                                          |

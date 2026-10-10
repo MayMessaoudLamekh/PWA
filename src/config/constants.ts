@@ -5,6 +5,9 @@ export const APP = {
   name: "SmartCar",
   locale: "fr-MA",
   currency: "MAD",
+  // Public contact details shown on the landing page — replace with the team's.
+  contactPhone: "+212 6 00 00 00 00",
+  contactEmail: "contact@smartcar.test",
 } as const;
 
 const opts = <T extends string>(o: { value: T; label: string }[]) => o;

@@ -36,3 +36,8 @@ export function labelOf<T extends string>(
 ) {
   return options.find((o) => o.value === value)?.label ?? value;
 }
+
+/** Joins class names, skipping falsy values. */
+export function cn(...classes: (string | false | null | undefined)[]) {
+  return classes.filter(Boolean).join(" ");
+}
